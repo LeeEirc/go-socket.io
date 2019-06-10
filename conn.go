@@ -179,6 +179,15 @@ func (c *conn) serveRead() {
 		var header parser.Header
 		if err := c.decoder.DecodeHeader(&header, &event); err != nil {
 			c.onError("", err)
+			conn, ok := c.namespaces[""]
+			if !ok {
+				c.decoder.DiscardLast()
+				return
+			}
+			handler, ok := c.handlers[""]
+			if ok {
+				handler.onDisconnect(conn, err.Error())
+			}
 			return
 		}
 		if header.Namespace == "/" {
